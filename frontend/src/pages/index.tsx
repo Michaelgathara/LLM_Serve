@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, FormEvent, KeyboardEvent, MouseEvent } from 'react';
 import { Send, Loader2, User, Bot } from 'lucide-react';
 
 export default function HomePage() {
@@ -7,8 +7,8 @@ export default function HomePage() {
     { sender: 'assistant', text: 'Hello! How can I help you today?' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef(null);
-  const inputRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -22,7 +22,7 @@ export default function HomePage() {
     inputRef.current?.focus();
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent | MouseEvent<HTMLButtonElement> | KeyboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
 
@@ -98,22 +98,22 @@ export default function HomePage() {
       );
     } finally {
       setIsLoading(false);
+      inputRef.current?.focus();
     }
   };
 
-  const formatMessageText = (text) => {
-
-    return text.split('```').map((segment, i) => {
+  const formatMessageText = (text: string) => {
+    return text.split('```').map((segment: string, i: number) => {
       if (i % 2 === 1) { // Code block
         return (
-          <pre key={i} className="bg-gray-50 p-4 rounded-md my-3 overflow-x-auto border border-gray-200 text-sm font-mono dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
+          <pre key={i} className="bg-gray-900 p-4 rounded-md my-3 overflow-x-auto border border-gray-700 text-sm font-mono text-gray-300">
             <code>{segment}</code>
           </pre>
         );
       } else {
         return (
           <span key={i}>
-            {segment.split('\n').map((line, j) => (
+            {segment.split('\n').map((line: string, j: number) => (
               <span key={j}>
                 {line}
                 {j !== segment.split('\n').length - 1 && <br />}
@@ -126,60 +126,62 @@ export default function HomePage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-gray-900">
-      <header className="sticky top-0 z-10 bg-white dark:bg-gray-900 py-3 px-4 border-b border-gray-100 dark:border-gray-800">
-        <div className="max-w-5xl mx-auto flex items-center">
-          <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center">
-            <Bot size={18} className="text-white" />
+    <div className="flex flex-col h-screen bg-black text-gray-100">
+      <header className="sticky top-0 z-10 bg-gray-900 py-4 px-6 border-b border-gray-800">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <Bot size={20} className="text-white" />
+            </div>
+            <h1 className="ml-3 text-xl font-medium bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">PreTrained Transformer Chat</h1>
           </div>
-          <h1 className="ml-3 text-lg font-medium text-gray-800 dark:text-white">Assistant</h1>
         </div>
       </header>
 
-      <div className="flex-grow overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-4">
+      <div className="flex-grow overflow-y-auto bg-gradient-to-b from-black to-gray-900">
+        <div className="max-w-6xl mx-auto px-6">
           {messages.map((msg, index) => (
             <div 
               key={index} 
-              className={`py-6 ${index > 0 ? 'border-t border-gray-100 dark:border-gray-800' : ''}`}
+              className={`py-6 ${index > 0 ? 'border-t border-gray-800' : ''}`}
             >
               <div className="flex items-start">
-                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-4
+                <div className={`flex-shrink-0 w-10 h-10 flex items-center justify-center mr-4 rounded-xl
                   ${msg.sender === 'user' 
-                    ? 'bg-blue-50 text-blue-500 dark:bg-blue-900 dark:text-blue-200' 
-                    : 'bg-purple-50 text-purple-600 dark:bg-purple-900 dark:text-purple-200'}`}
+                    ? 'bg-gradient-to-br from-blue-600 to-blue-800' 
+                    : 'bg-gradient-to-br from-purple-600 to-indigo-800'}`}
                 >
                   {msg.sender === 'user' 
-                    ? <User size={16} /> 
-                    : <Bot size={16} />
+                    ? <User size={18} className="text-gray-100" /> 
+                    : <Bot size={18} className="text-gray-100" />
                   }
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  <p className="text-sm font-medium text-gray-400 mb-2">
                     {msg.sender === 'user' ? 'You' : 'Assistant'}
                   </p>
-                  <div className="prose prose-slate dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                  <div className="text-gray-200 leading-relaxed">
                     {formatMessageText(msg.text)}
                   </div>
                   
                   {isLoading && index === messages.length - 1 && msg.sender === 'assistant' && !msg.text && (
-                    <div className="flex items-center h-6 space-x-1 mt-1">
-                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse"></div>
-                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                      <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                    <div className="flex items-center h-6 space-x-2 mt-2">
+                      <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></div>
+                      <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
                     </div>
                   )}
                 </div>
               </div>
             </div>
           ))}
-          <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} className="h-4" />
         </div>
       </div>
 
-      <div className="border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 py-4 px-4">
-        <div className="max-w-5xl mx-auto">
+      <div className="border-t border-gray-800 bg-gray-900 py-6 px-6">
+        <div className="max-w-6xl mx-auto">
           <div className="flex items-end gap-3">
             <div className="relative flex-grow">
               <input
@@ -193,15 +195,15 @@ export default function HomePage() {
                     handleSubmit(e);
                   }
                 }}
-                placeholder="What do you want to know?"
+                placeholder="Ask me anything..."
                 disabled={isLoading}
-                className="w-full p-3 pr-10 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                className="w-full p-4 pr-12 rounded-xl border border-gray-700 bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-100 placeholder-gray-400"
               />
             </div>
             <button
               onClick={handleSubmit}
               disabled={isLoading || !inputValue.trim()}
-              className="p-3 rounded-lg bg-purple-600 text-white flex items-center justify-center hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed transition-colors dark:disabled:bg-purple-900"
+              className="p-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white flex items-center justify-center hover:from-blue-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               aria-label="Send message"
             >
               {isLoading ? (
