@@ -36,7 +36,9 @@ export default function HomePage() {
       const assistantMessageShell = { sender: 'assistant', text: '' };
       setMessages((prevMessages) => [...prevMessages, assistantMessageShell]);
 
-      const response = await fetch('http://localhost:8000/api/chat/stream', {
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/chat/stream`;
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -89,10 +91,16 @@ export default function HomePage() {
       }
     } catch (error) {
       console.error('Error fetching stream:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Could not connect to the server.';
+      let displayError = 'Error: Could not connect to the server.';
+      if (process.env.NODE_ENV === 'development') {
+        displayError += ` (Details: ${errorMessage}. API URL: ${process.env.NEXT_PUBLIC_API_BASE_URL}/api/chat/stream)`;
+      }
+
       setMessages((prevMessages) =>
         prevMessages.map((msg, index) =>
           index === prevMessages.length - 1
-            ? { ...msg, text: 'Error: Could not connect to the server.' }
+            ? { ...msg, text: displayError }
             : msg
         )
       );
